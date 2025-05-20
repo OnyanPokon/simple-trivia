@@ -11,6 +11,7 @@ import { createContext } from 'react';
  *   warning: (message: string, description?: string) => void;
  * }>}
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const NotificationContext = createContext();
 
 export default function NotificationProvider({ children }) {

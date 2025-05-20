@@ -1,151 +1,57 @@
-import { HttpStatusCode } from '@/constants';
-import { useLocalStorage, useService } from '@/hooks';
-import { AuthService } from '@/services';
-import env from '@/utils/env';
+import AuthContext from '@/context/AuthContext';
 import PropTypes from 'prop-types';
-import { createContext, useCallback, useEffect, useState } from 'react';
-
-/**
- * @typedef {{
- *  isSuccess: boolean;
- *  message: string;
- * }} Response
- */
-
-/**
- * @type {React.Context<{
- *  login: (username: string, password: string) => Promise<Response>;
- *  logout: () => void;
- *  forgot: (email: string) => Promise<Response>;
- *  reset: (token: string, password: string) => Promise<Response>;
- *  token: string;
- *  user: import('@/models/User').default | null;
- *  isLoading: boolean;
- *  onUnauthorized: () => void;
- * }>}
- */
-export const AuthContext = createContext({
-    login: () => Promise.resolve({ isSuccess: false, message: '' }),
-    logout: () => undefined,
-    forgot: () => Promise.resolve({ isSuccess: false, message: '' }),
-    reset: () => Promise.resolve({ isSuccess: false, message: '' }),
-    token: JSON.parse(localStorage.getItem('token'))?.data || '',
-    user: null,
-    isLoading: false,
-    onUnauthorized: () => { }
-});
+import { useCallback, useState } from 'react';
 
 export default function AuthProvider({ children }) {
-    const { execute: loginService, isLoading: loginIsLoading } = useService(AuthService.login);
-    const { execute: logoutService, isLoading: logoutIsLoading } = useService(AuthService.logout);
-    const { execute: forgotService, isLoading: forgotIsLoading } = useService(AuthService.forgot);
-    const { execute: resetService, isLoading: resetIsLoading } = useService(AuthService.reset);
-    const { execute: getUser, isLoading: getUserIsLoading } = useService(AuthService.me);
-    const [token, setToken] = useLocalStorage('token', '');
-    const [user, setUser] = useState(null);
+  const [loggedUser, setLoggedUser] = useState(() => {
+    const stored = localStorage.getItem('loggedUser');
+    return stored ? JSON.parse(stored) : null;
+  });
 
-    env.dev(() => {
-        window.token = token;
-        window.user = user;
-    });
+  const getAllUsers = () => {
+    const users = localStorage.getItem('registeredUsers');
+    return users ? JSON.parse(users) : [];
+  };
 
-    useEffect(() => {
-        if (!token) {
-            setUser(null);
-            return;
-        }
+  const saveAllUsers = (users) => {
+    localStorage.setItem('registeredUsers', JSON.stringify(users));
+  };
 
-        (async () => {
-            const { code, data } = await getUser(token);
-            if (code === HttpStatusCode.UNAUTHORIZED) {
-                setToken('');
-                return;
-            }
+  const register = (username) => {
+    const users = getAllUsers();
+    const existing = users.find((user) => user.username === username);
+    if (existing) {
+      throw new Error('Username sudah terdaftar');
+    }
 
-            setUser(data);
-        })();
-    }, [getUser, setToken, token]);
+    const newUser = {
+      username,
+      quizProgress: []
+    };
 
-    const login = useCallback(
-        /**
-         * @param {string} username
-         * @param {string} password
-         * @returns {Promise<Response>}
-         */
-        async (username, password) => {
-            const { message, isSuccess, data: token } = await loginService(username, password);
-            if (!isSuccess) return { message, isSuccess };
+    users.push(newUser);
+    saveAllUsers(users);
+  };
 
-            setToken(token);
-            return {
-                isSuccess,
-                message: 'Login berhasil'
-            };
-        },
-        [loginService, setToken]
-    );
+  const login = (username) => {
+    const users = getAllUsers();
+    const user = users.find((user) => user.username === username);
+    if (!user) {
+      throw new Error('Username tidak ditemukan');
+    }
 
-    const forgot = useCallback(
-        /**
-         * @param {string} email
-         * @returns {Promise<Response>}
-         */
-        async (email) => {
-            const { message, isSuccess } = await forgotService(email);
-            if (!isSuccess) return { message, isSuccess };
+    localStorage.setItem('loggedUser', JSON.stringify(user));
+    setLoggedUser(user);
+  };
 
-            return {
-                isSuccess,
-                message: 'Email reset kata sandi telah dikirim'
-            };
-        },
-        [forgotService]
-    );
+  const logout = useCallback(() => {
+    localStorage.removeItem('loggedUser');
+    setLoggedUser(null);
+  }, []);
 
-    const reset = useCallback(
-        /**
-         * @param {string} token
-         * @param {string} password
-         * @param {string} confirmPassword
-         * @returns {Promise<Response>}
-         */
-        async (token, password, confirmPassword) => {
-            const { message, isSuccess } = await resetService(token, password, confirmPassword);
-            if (!isSuccess) return { message, isSuccess };
-
-            return {
-                isSuccess,
-                message: 'Kata Sandi berhasil direset'
-            };
-        },
-        [resetService]
-    );
-
-    const logout = useCallback(() => {
-        setToken('');
-        logoutService(token);
-    }, [logoutService, setToken, token]);
-
-    const onUnauthorized = useCallback(() => logout(), [logout]);
-
-    return (
-        <AuthContext.Provider
-            value={{
-                login,
-                logout,
-                forgot,
-                reset,
-                token,
-                user,
-                isLoading: loginIsLoading || logoutIsLoading || getUserIsLoading || forgotIsLoading || resetIsLoading,
-                onUnauthorized
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
+  return <AuthContext.Provider value={{ loggedUser, login, logout, register }}>{children}</AuthContext.Provider>;
 }
 
 AuthProvider.propTypes = {
-    children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired
 };
