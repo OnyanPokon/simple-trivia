@@ -5,7 +5,9 @@ enum InputType {
   DATE = 'date',
   UPLOAD = 'upload',
   SELECT = 'select',
-  SELECT_LOGO = 'select-logo'
+  SELECT_LOGO = 'select-logo',
+  ID_GENERATOR = 'id-generator',
+  OTP = 'otp'
 }
 
 export default InputType;

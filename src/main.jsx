@@ -4,15 +4,18 @@ import './index.css';
 import App from './App.jsx';
 import { AntdConfigProviders, NotificationProvider } from './providers';
 import AuthProvider from './providers/AuthProvider';
+import CrudModalProvider from './providers/CrudModalProvider';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AntdConfigProviders>
-      <NotificationProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </NotificationProvider>
+      <CrudModalProvider>
+        <NotificationProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </NotificationProvider>
+      </CrudModalProvider>
     </AntdConfigProviders>
   </StrictMode>
 );

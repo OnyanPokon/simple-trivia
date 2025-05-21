@@ -13,5 +13,14 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom'
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://opentdb.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   }
 });

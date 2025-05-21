@@ -1,4 +1,5 @@
-import { Trivia } from '@/models';
+/* eslint-disable no-unused-vars */
+import { HttpStatusCode } from '@/constants';
 import api from '@/utils/api';
 
 export default class TriviaService {
@@ -11,10 +12,34 @@ export default class TriviaService {
    *  data?: Trivia[];
    * }>}
    * */
-  static async getAll(token) {
-    const response = await api.get('/trivia', { token });
-    if (!response.data) return response;
-    return { ...response, data: Trivia.fromApiData(response.data) };
+  static async getQuiz({ ...filters }) {
+    const params = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== null && value !== undefined && value !== ''));
+    const response = await api.get('/api/api.php', { params });
+
+    const { response_code, results } = response;
+
+    return {
+      code: HttpStatusCode.OK,
+      status: response_code === 0,
+      message: response_code === 0 ? 'Berhasil mengambil data' : 'Gagal mengambil data',
+      data: results
+    };
+  }
+
+  /**
+   * @param {string} token
+   * @returns {Promise<{
+   *  code: HTTPStatusCode;
+   *  status: boolean;
+   *  message: string;
+   *  data?: Trivia[];
+   * }>}
+   * */
+  static async getAllCategories() {
+    const response = await api.get('/api/api_category.php');
+    return {
+      data: response.trivia_categories
+    };
   }
 
   /**
@@ -27,9 +52,9 @@ export default class TriviaService {
    *  errors?: { [key: string]: string[] };
    * }}
    */
-  static async store(data, token) {
-    return await api.post('/trivia', { body: Trivia.toApiData(data), token });
-  }
+  // static async store(data, token) {
+  //   return await api.post('/trivia', { body: Trivia.toApiData(data), token });
+  // }
 
   /**
    * @param {number} id
@@ -42,9 +67,9 @@ export default class TriviaService {
    *  errors?: { [key: string]: string[] };
    * }>}
    */
-  static async update(id, data, token) {
-    return await api.patch(`/trivia/edit/${id}`, { body: Trivia.toApiData(data), token });
-  }
+  // static async update(id, data, token) {
+  //   return await api.patch(`/trivia/edit/${id}`, { body: Trivia.toApiData(data), token });
+  // }
 
   /**
    * @param {number} id

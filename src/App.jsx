@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 import { authLink, dashboardLink, landingLink } from './data/link';
 import { AuthLayout, DashboardLayout, LandingLayout } from './layouts';
+import { RunQuiz } from './pages/dashboard';
 
 function App() {
   return (
@@ -26,7 +27,8 @@ function App() {
                   element: <Element />
                 };
               })
-            )
+            ),
+            { path: '/my_quiz/run/:id', element: <RunQuiz /> }
           ]
         },
         {

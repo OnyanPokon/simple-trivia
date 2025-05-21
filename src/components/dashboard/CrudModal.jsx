@@ -8,6 +8,7 @@ import Dragger from 'antd/es/upload/Dragger';
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { Select } from './input';
+import nanoId from '@/utils/nanoId';
 
 /**
  * @param {{
@@ -83,6 +84,33 @@ export default function CrudModal({ isModalOpen, data: initialData, close, title
             ))}
           </div>
         );
+
+      case InputType.ID_GENERATOR:
+        return (
+          <Input
+            placeholder={`Masukan ${field.label}`}
+            readOnly={field.readOnly}
+            value={form.getFieldValue(field.name)}
+            onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+            suffix={
+              <Button
+                variant="solid"
+                color="primary"
+                onClick={() => {
+                  const id = nanoId();
+                  form.setFieldValue(field.name, id);
+                  handleValuesChange({ [field.name]: id });
+                }}
+              >
+                Generate
+              </Button>
+            }
+            {...field.extra}
+          />
+        );
+
+      case InputType.OTP:
+        return <Input.OTP size="large" readOnly={field.readOnly} {...field.extra} />;
 
       default:
         return null;
